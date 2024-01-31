@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rec Room Cheers Viewer</title>
+</head>
+<body>
+    <h1>Rec Room Cheers Viewer</h1>
+    <input type="text" id="imageUrl" placeholder="Enter Rec.net image URL">
+    <button onclick="fetchCheers()">Get Cheers</button>
+    <div id="results"></div>
+
+    <script>
+        async function fetchCheers() {
+            const imageUrlInput = document.getElementById('imageUrl');
+            const imageUrl = imageUrlInput.value;
+
+            // Extract the image ID from the URL
+            const imageId = imageUrl.split('/').pop();
+
+            // Fetch cheers data
+            try {
+                const cheersResponse = await fetch(`https://apim.rec.net/apis/api/images/v1/${imageId}/cheers`);
+                if (!cheersResponse.ok) {
+                    throw new Error('Cheers data could not be fetched');
+                }
+                const cheersData = await cheersResponse.json();
+
+                // Extract user IDs
+                const userIds = cheersData.map(cheer => cheer.accountId);
+
+                // Fetch user details
+                const userDetailsResponse = await fetch(`https://accounts.rec.net/account/bulk?id=${userIds.join(',')}`);
+                const userDetails = await userDetailsResponse.json();
+
+                // Display the usernames
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<h2>Usernames:</h2>';
+                userDetails.forEach(user => {
+                    resultsDiv.innerHTML += `<p>${user.username}</p>`;
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
